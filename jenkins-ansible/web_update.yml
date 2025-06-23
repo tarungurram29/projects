@@ -1,0 +1,19 @@
+- name: Upload new code and restart
+  hosts: web
+  vars:
+    app: apache2
+  tasks:
+    - name: place custom webpages
+      synchronize:
+        src: "/mnt/c/ProgramData/Jenkins/.jenkins/workspace/git_update/03-EBook-Site/"
+        dest: /var/www/html/
+        recursive: yes
+      become: true
+
+    - name: start the service
+      service:
+        name: apache2
+        state: restarted
+        enabled: yes
+      become: true
+
