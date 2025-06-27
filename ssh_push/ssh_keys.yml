@@ -1,0 +1,29 @@
+- name: creating .ssh, authorized_keys and pasting id_rsa.pub
+  hosts: demo-server
+  become: true
+  vars:
+    public_id_rsa: "{{ lookup('file', '~/.ssh/id_rsa.pub' ) }}"
+  tasks:
+    - name: ensuring if .ssh exists or not
+      file:
+        path: /home/ubuntu/.ssh
+        state: directory
+        # permission to the .ssh directory
+        mode: '0700'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: creating authorized_keys file
+      file:
+        path: /home/ubuntu/.ssh/authorized_keys
+        state: touch
+        mode: '0644'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: adding publickey to authorized_keys file
+      lineinfile: 
+        path: /home/ubuntu/.ssh/authorized_keys
+        line: "{{ public_id_rsa }}"
+        create: yes
+        state: present
