@@ -9,9 +9,10 @@ function costoptimization(){
     #deleting orphaned ec2 instance
     echo "-----------------------------------------"
     echo "finding the orphaned EC2 instances"
+    echo "Enter env value:" env
     EC2_ID=$( aws ec2 describe-instances \
     --region $region \
-    --filters "Name=tag:Environment,Values=dev" "Name=instance-state-name,Values=running" \
+    --filters "Name=tag:Environment,Values=$env" "Name=instance-state-name,Values=running" \
     --query "Reservations[].Instances[].InstanceId" \
     --output text )
 
