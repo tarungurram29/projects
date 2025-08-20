@@ -1,0 +1,152 @@
+pipeline{
+    agent any
+
+    tools{
+        jdk 'JAVA_HOME'
+        nodejs 'nodejs'
+    }
+
+    environment{
+        SCANNER_HOME = tool 'sonar-scanner'
+        TMDB_V3_API_KEY = credentials('tmdb-api-key')
+        TRIVY_PATH = "C:\\Users\\gurra\\Downloads\\trivy_0.64.1_windows-64bit\\trivy.exe"
+        DOCKER_PATH = "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe"
+        DOCKER_CONFIG = "${env.WORKSPACE}\\.docker"
+        GIT_PATH = "C:\\Program Files\\Git\\cmd\\git.exe"
+        POWERSHELL_PATH = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+        DOCKER_USERNAME = "fakefauxyy"
+        IMAGE = "netflix:v1"
+    }
+
+    parameters {
+        choice(name: 'IMAGE_UPDATE', choices: ['blue','green','stop'], description: 'in which env you want to update the image?')
+        choice(name: 'SWITCH_TRAFFIC', choices: ['blue','green'], description: 'switch traffic to either blue or green')
+        choice(name: 'DOCKER_SKIP', choices: ['Yes','No'], description: 'want to skip the image build,push stage?')
+    }
+
+    stages{
+        stage('clean workspace'){
+            steps{
+                cleanWs()
+            }
+        }
+        stage('fetching code from github'){
+            steps{
+            git branch: 'main', url: 'https://github.com/tarungurram29/DevSecOps-Project'
+            }
+        }
+        stage('sonarqube analysis'){
+            steps{
+                withSonarQubeEnv('sonarqube'){
+                    withCredentials([string(credentialsId: 'netflix-token', variable: 'SONAR_TOKEN')]){
+                        bat """
+                        %SCANNER_HOME%\\bin\\sonar-scanner \
+                        -Dsonar.projectName=netflix \
+                        -Dsonar.projectKey=netflix \
+                        -Dsonar.host.url=http://localhost:9000 \
+                        -Dsonar.login=%SONAR_TOKEN%
+                        """
+                    }
+                }
+            }
+        }
+        stage('dependency installtion'){
+            steps{
+                bat "npm install"
+            }
+        }
+        stage('owasp'){
+            steps{
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'owasp'
+            }
+        }
+        stage('trivy'){
+            steps{
+                bat '"%TRIVY_PATH%" fs --skip-db-update --skip-policy-update --skip-version-check --skip-java-db-update . > trivyfs.txt'
+            }
+        }
+        stage('build image & push'){
+            steps{
+                withCredentials([ 
+                    usernamePassword(credentialsId: 'docker', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')])
+                    // string(credentialsId: 'tmdb-api-key', variable: 'TMDB_V3_API_KEY') ])
+                {
+                        script{
+                            if (params.DOCKER_SKIP != 'No') {
+                                bat """
+                                    if not exist "%DOCKER_CONFIG%" mkdir "%DOCKER_CONFIG%"
+                                    echo { "credsStore": "" } > "%DOCKER_CONFIG%\\config.json"
+                                """
+                                    withEnv(["DOCKER_CONFIG=${env.WORKSPACE}\\.docker"]) {
+                                    bat "echo %PASSWORD% | \"%DOCKER_PATH%\" login -u %USERNAME% --password-stdin"
+                                    bat "\"%DOCKER_PATH%\" build --no-cache --build-arg TMDB_V3_API_KEY=%TMDB_V3_API_KEY% -t %IMAGE% . "
+                                    bat "\"%DOCKER_PATH%\" tag %IMAGE% %DOCKER_USERNAME%/%IMAGE%"
+                                    bat "\"%DOCKER_PATH%\" push %DOCKER_USERNAME%/%IMAGE%"
+                                    }
+                            }else{
+                                echo "SKIPPINGGG"
+                            }
+                        }
+                }
+            }
+        }
+        stage('trivy scan'){
+            steps{
+                bat '"%TRIVY_PATH%" image %DOCKER_USERNAME%/%IMAGE% > trivyimage.txt'
+            }
+        }
+        stage('updating deployment image'){
+            steps{
+                withCredentials([usernamePassword(
+                    credentialsId: 'github_token',
+                    usernameVariable: 'GIT_USER',
+                    passwordVariable: 'GIT_TOKEN'
+                )]){
+                    script{
+                        // def currentimage = "${DOCKER_USERNAME}/${IMAGE}"
+                        // def yamlimageline = readFile("Kubernetes/blue-green-manifests/${params.IMAGE_UPDATE}-deployment.yaml").readLines().find { it.contains("image: ")}
+
+                        if(params.IMAGE_UPDATE != 'stop'){
+                            def currentimage = "${DOCKER_USERNAME}/${IMAGE}"
+                            def yamlimageline = readFile("Kubernetes/blue-green-manifests/${params.IMAGE_UPDATE}-deployment.yaml").readLines().find { it.contains("image: ")}
+                                if(!yamlimageline.contains(currentimage)){
+                                    bat """
+                                    "%POWERSHELL_PATH%" -Command "(Get-Content  Kubernetes\\blue-green-manifests\\${params.IMAGE_UPDATE}-deployment.yaml) -replace 'IMAGE_PLACEHOLDER', '${currentimage}' | Set-Content Kubernetes\\blue-green-manifests\\${params.IMAGE_UPDATE}-deployment.yaml"
+                                    "%GIT_PATH%" config user.name "tarungurram29"
+                                    "%GIT_PATH%" config user.email "gurramtarun29@gmail.com"
+                                    "%GIT_PATH%" add Kubernetes\\blue-green-manifests\\${params.IMAGE_UPDATE}-deployment.yaml
+                                    "%GIT_PATH%" remote set-url origin https://%GIT_USER%:%GIT_TOKEN%@github.com/%GIT_USER%/DevSecOps-Project
+                                    "%GIT_PATH%" commit -m "updated ${params.IMAGE_UPDATE}-deployment.yaml" || echo No changes to commit
+                                    "%GIT_PATH%" push origin main
+                                    """
+                                }else{
+                                    echo "Image already up-to-date in ${params.IMAGE_UPDATE}-deployment.yaml"
+                                }
+                        }else{
+                            echo "Stop selected — skipping deployment update"
+                        }
+                    }
+                }
+            }
+        }
+        stage("switching the traffic"){
+            steps{
+                withCredentials([usernamePassword(
+                    credentialsId: 'github_token',
+                    usernameVariable: 'GIT_USER',
+                    passwordVariable: 'GIT_TOKEN'
+                )]){
+                    bat """
+                    "%POWERSHELL_PATH%" -Command "(Get-Content Kubernetes\\blue-green-manifests\\service.yaml) -replace 'color:.*', 'color: ${params.SWITCH_TRAFFIC}' | Set-Content Kubernetes\\blue-green-manifests\\service.yaml"
+                    "%GIT_PATH%" config user.name "tarungurram29"
+                    "%GIT_PATH%" config user.email "gurramtarun29@gmail.com"
+                    "%GIT_PATH%" add Kubernetes\\blue-green-manifests\\service.yaml
+                    "%GIT_PATH%" remote set-url origin https://%GIT_USER%:%GIT_TOKEN%@github.com/%GIT_USER%/DevSecOps-Project
+                    "%GIT_PATH%" commit -m "switched traffic to ${params.SWITCH_TRAFFIC}" || echo No changes to commit
+                    "%GIT_PATH%" push origin main
+                    """
+                }
+            }
+        }
+    }
+}

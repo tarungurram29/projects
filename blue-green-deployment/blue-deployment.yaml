@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: blue-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      color: blue
+  template:
+    metadata:
+      name: blue-pod
+      labels:
+        color: blue
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: netflix
+        image: fakefauxyy/netflix:v1
+        ports:
+          - containerPort: 80
