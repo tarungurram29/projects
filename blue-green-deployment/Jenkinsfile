@@ -138,8 +138,8 @@ pipeline{
                 )]){
                     bat """
                     "%POWERSHELL_PATH%" -Command "(Get-Content Kubernetes\\blue-green-manifests\\service.yaml) -replace 'color:.*', 'color: ${params.SWITCH_TRAFFIC}' | Set-Content Kubernetes\\blue-green-manifests\\service.yaml"
-                    "%GIT_PATH%" config user.name "tarungurram29"
-                    "%GIT_PATH%" config user.email "gurramtarun29@gmail.com"
+                    "%GIT_PATH%" config user.name "<username>"
+                    "%GIT_PATH%" config user.email "<youremail>"
                     "%GIT_PATH%" add Kubernetes\\blue-green-manifests\\service.yaml
                     "%GIT_PATH%" remote set-url origin https://%GIT_USER%:%GIT_TOKEN%@github.com/%GIT_USER%/DevSecOps-Project
                     "%GIT_PATH%" commit -m "switched traffic to ${params.SWITCH_TRAFFIC}" || echo No changes to commit
