@@ -1,51 +1,82 @@
-#######################
-# Author: Tarun gurram
-# About this script: Archiving/backup file/folder in a backup folder   
-#######################
 #!/bin/bash
+##########################################
+# Author: Tarun Gurram
+# INFO: This script must run by root user for taking backups into tar files and deleting old tar files by retention days.
+##########################################
+if [[ $UID -ne 0 ]]; then
+    exit 1
+fi
 
-back_up(){
-    backup=$1
-    if [[ "$backup" == "--backup" ]]; then
-        read -p "Enter username" USER
-        echo "Switching to ${USER} folder"
-        cd /home/"${USER}" || { echo "Cannot switch to the user"; exit 1; }
 
-        read -p "Enter source path(eg:- /home/username/Downloads)" sourcepath
-        read -p "Enter backup dir path(eg:- /home/username/Downloads/back_up)" backuppath
-        if [[ "${#sourcepath}" -gt 0 ]]; then
-            SOURCE_PATH="${sourcepath}"
-            BACKUP_PATH="${backuppath}"
-            HOSTNAME=$(hostname -s)
-            DATE=$(date +"%Y-%m-%d_%H-%M-%S")
-            ARCHIVE_NAME="${HOSTNAME}_backup_${DATE}.tar.gz"
+LOG_PATH=/var/log/backup
+LOG_FILE="${LOG_PATH}"/backup.log
+NAME=$(whoami)
 
-            echo "Creating the backup of $SOURCE_PATH.."
-            tar -czf "$BACKUP_PATH/$ARCHIVE_NAME" -C "$SOURCE_PATH" .
+mkdir -p "${LOG_PATH}"
 
-            if [ $? -eq 0 ]; then
-                echo "Created backup"
-            else
-                echo "failed"
-                exit 1
-            fi
+log(){
+    echo "[$(date +"%Y-%m-%d_%H-%M-%S")] $1" >> "${LOG_FILE}" >/dev/null
+}
 
-            echo "want to delete old backup files? (y/n)"
-            read option
-            if [[ "$option" = "y" || "$option" = "Y" ]]; then
-                echo "enter the retention days"
-                read retention_days
-                    if [[ "$retention_days" =~ ^[0-9]+$ ]]; then
-                        find "${BACKUP_PATH}" -type f -name "*.tar.gz" -mtime +$retention_days -exec rm {} \; 
-                    fi
-            else
-                exit 1
-            fi
-        else
-            echo "Go to root "/" directory and run the script"
+taking_backup(){
+    read -p "Enter source path" source
+    read -p "Enter backup directory" backup
+
+    if [[ -n "${source}" && -n "${backup}" ]]; then
+        if [[ ! -d "${source}" ]]; then
+            echo "Source not found"
+            log "Source directory not found for taking the backup by user: $NAME"
+            exit 1
         fi
-    else
-        echo "give --backup parameter to execute the script"
+
+        mkdir -p "${backup}"
+
+        DATE=$(date +"%Y-%m-%d_%H-%M-%S")
+        ARCHIVE_NAME="${NAME}__backup_${DATE}.tar.gz"
+    
+        echo "creating backup"
+        tar -czf "${backup}/${ARCHIVE_NAME}" -C "${source}" . 
+
+        if [[ $? -eq 0 ]]; then
+            echo "Successfully taken the backup"
+            log "Successfully taken the backup by the user: ${NAME}"
+        else
+            echo "failed"
+            log "Failed to take the backup by the user: ${NAME}"
+            exit 1
+        fi
     fi
-} 
-back_up "$1"
+}
+
+deleting_backup(){
+    read -p "Enter retention days in numbers" retention
+    read -p "Enter backup path to delete them" backup_path
+
+    if ! [[ "${retention}" =~ ^[0-9]+$ ]]; then
+        echo "Enter number please"
+        log "Entered alphabets instead of numbers in rentention input by user: $NAME"
+        exit 1
+    else
+        if [[ ! -d "${backup_path}" || "${retention}" -eq 0 ]]; then
+            echo "Backup folder doesnt exist AND enter retention day more than 0."
+            log "Backup folder doesnt exist AND enter retention day more than 0. by user: $NAME"
+            exit 1
+        else
+            find "${backup_path}" -type f -name "*.tar.gz" -mtime +"${retention}" -exec -f rm {} \;
+            log "Successfully Deleted old backup files by the user: ${NAME}...Rentention days: $retention"
+        fi
+    fi
+}
+
+case $1 in
+    --backup)
+        taking_backup
+    ;;
+    --delete-backup)
+        deleting_backup
+    ;;
+    *)
+        echo "Use --backup argument.... for taking backup"
+        echo "Use --delete-backup.... to delete the old backup files/folders"
+    ;;
+esac
