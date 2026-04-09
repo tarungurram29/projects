@@ -18,11 +18,13 @@ Deploy Blue & Green Pods
 Kubernetes Service routes traffic
         ↓
 User Access Application
+
 ⚙️ Tech Stack
 ☸️ Kubernetes (Deployments & Services)
 ⚙️ Jenkins (CI Pipeline)
 🐳 Docker (Containerization)
 🔄 ArgoCD (GitOps CD)
+
 🐧 Linux
 📂 Project Structure
 blue-green-deployment/
@@ -32,6 +34,7 @@ blue-green-deployment/
 │── service.yaml
 │── images/
 │── README.md
+
 🔁 Complete Deployment Flow (CI + CD + GitOps)
 Developer pushes code to GitHub
 Jenkins pipeline is triggered
@@ -42,6 +45,7 @@ Updated manifests are pushed to Git repository
 ArgoCD continuously monitors the Git repo
 ArgoCD detects changes and syncs automatically
 Kubernetes cluster gets updated deployment
+
 🔵🟢 Blue-Green Deployment Flow
 Blue deployment is live (current version)
 Green deployment is created with new version
@@ -49,6 +53,7 @@ Green environment is tested
 Kubernetes Service selector is updated
 Traffic shifts from Blue → Green
 Blue is kept as backup for rollback
+
 📜 Kubernetes Files Explained
 🔵 blue-deployment.yaml
 Runs current production version
@@ -57,6 +62,7 @@ Runs new version for testing
 🌐 service.yaml
 Uses labels to route traffic
 Switches between Blue & Green
+
 ⚙️ Jenkins vs ArgoCD Responsibilities
 Jenkins (CI)
 Build Docker image
@@ -66,10 +72,7 @@ ArgoCD (CD)
 Watches Git repository
 Syncs changes to cluster
 Maintains desired state
-🚀 How to Run
-kubectl apply -f blue-deployment.yaml
-kubectl apply -f green-deployment.yaml
-kubectl apply -f service.yaml
+
 🎯 Key Benefits
 ✅ Zero downtime deployment
 ✅ GitOps-based CD (ArgoCD)
@@ -88,6 +91,5 @@ Safe deployments are critical
 (Add Jenkins pipeline, ArgoCD dashboard, kubectl outputs)
 
 👨‍💻 Author
-
 Tarun Gurram
 🔗 https://www.linkedin.com/in/tgurram8
