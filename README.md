@@ -16,7 +16,9 @@ Automate application deployment
 Configure servers using Ansible playbooks
 Trigger deployments through Jenkins pipelines
 
-🔹 Shell Scripting Utilities
+🔹 SSH Push Automation
+
+Demonstrates remote execution and deployment using SSH. This project automates pushing scripts or commands to remote servers securely, useful for managing distributed systems.
 
 📜 Scripts Overview
 🔹 Backup Tool (backup_tool.sh)
@@ -47,10 +49,6 @@ Automates Linux user administration tasks.
 Create, delete, and manage users
 Assign permissions
 Simplifies repetitive admin work
-
-🔹 SSH Push Automation
-
-Demonstrates remote execution and deployment using SSH. This project automates pushing scripts or commands to remote servers securely, useful for managing distributed systems.
 
 🧠 Key Skills Demonstrated
 CI/CD Pipelines (Jenkins)
