@@ -3,6 +3,7 @@
 This repository contains a collection of hands-on DevOps and automation projects focused on real-world deployment strategies, CI/CD pipelines, and system-level scripting.
 
 📁 Project Overview
+
 🔹 Blue-Green Deployment
 
 Implements a zero-downtime deployment strategy using the blue-green model. This project demonstrates how to switch traffic between two identical environments to ensure seamless updates and quick rollback in case of failures.
