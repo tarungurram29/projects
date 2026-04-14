@@ -18,12 +18,36 @@ Trigger deployments through Jenkins pipelines
 
 🔹 Shell Scripting Utilities
 
-A collection of Bash scripts designed for system automation and administration tasks. Covers:
+📜 Scripts Overview
+🔹 Backup Tool (backup_tool.sh)
 
-User management
-File handling
-Process automation
-This project highlights strong Linux and scripting fundamentals.
+A script to automate backup of files and directories.
+
+Creates compressed backups
+Helps in data recovery and safety
+Can be scheduled using cron jobs
+🔹 Cost Optimization (costoptimization.sh)
+
+Designed to identify and manage resource usage efficiently.
+
+Detects unused or high-resource-consuming processes
+Helps reduce infrastructure costs
+Useful in cloud and server environments
+🔹 Performance Monitoring (performance.sh)
+
+Monitors system performance in real-time.
+
+Tracks CPU, memory, and disk usage
+Helps in identifying bottlenecks
+Useful for troubleshooting system slowdowns
+🔹 User Management (usermanagement1.sh)
+
+Automates Linux user administration tasks.
+
+Create, delete, and manage users
+Assign permissions
+Simplifies repetitive admin work
+
 🔹 SSH Push Automation
 
 Demonstrates remote execution and deployment using SSH. This project automates pushing scripts or commands to remote servers securely, useful for managing distributed systems.
