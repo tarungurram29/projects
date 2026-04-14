@@ -15,6 +15,7 @@ A complete CI/CD automation setup integrating Jenkins with Ansible. It showcases
 Automate application deployment
 Configure servers using Ansible playbooks
 Trigger deployments through Jenkins pipelines
+
 🔹 Shell Scripting Utilities
 
 A collection of Bash scripts designed for system automation and administration tasks. Covers:
