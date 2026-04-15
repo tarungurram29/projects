@@ -27,6 +27,17 @@ User management automation
 
 This project demonstrates hands-on experience in Linux, scripting, and real-world cloud cost optimization.
 
+🔹 SSH Push Automation (Ansible)
+
+Automates passwordless SSH login setup across multiple servers.
+
+Uses inventory.ini and host_vars for host management
+Dynamically generates host-specific files using Bash scripting
+Automates SSH key distribution
+Configures ~/.ssh/authorized_keys
+
+Enables scalable and secure server access without manual configuration.
+
 🧠 Key Skills Demonstrated
 CI/CD Pipelines (Jenkins)
 Configuration Management (Ansible)
